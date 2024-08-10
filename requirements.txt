@@ -3,3 +3,6 @@ pandas
 matplotlib
 tqdm
 pydantic
+pendulum
+geopandas
+rasterio
