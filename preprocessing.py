@@ -3,17 +3,36 @@ from pathlib import Path
 
 import numpy as np
 import geopandas as gpd
+from pyproj.crs.crs import CRS
 import xarray as xr
 import rasterio
 import rioxarray
 import pendulum
+from shapely.geometry import Point
 
 
 def read_raster_file(file_path: Path) -> xr.DataArray:
+    """Read a raster file like a geotiff and return the content.
+
+    Args:
+        file_path:
+            Path to the raster file.
+
+    Returns:
+         The contents of the raster file.
+    """
     return rioxarray.open_rasterio(file_path)
 
 
 def read_vector_file(file_path: Path) -> gpd.GeoDataFrame:
+    """Read a vector file like a shapefile and return the content.
+
+    file_path:
+        Path to the vector file.
+
+    Returns:
+        The contents of the vector file.
+    """
     return gpd.read_file(file_path)
 
 
@@ -50,12 +69,23 @@ def load_filtered_paths(
     return sorted(filtered_paths)
 
 
-def crop_vector_data_to_shape_boundaries(
-    vector_data: xr.DataArray, shape: gpd.GeoDataFrame
+def crop_raster_data_to_shape_boundaries(
+    raster_data: xr.DataArray, vector_data: gpd.GeoDataFrame
 ) -> xr.DataArray:
-    extend = shape.bounds
+    """Crop the vector data to shape boundaries.
 
-    return vector_data.sel(
+    Args:
+        raster_data:
+            The raster data to crop.
+        vector_data:
+            The vector data, where the boundaries can be extracted from.
+
+    Returns:
+        The cropped data in raster format.
+    """
+    extend = vector_data.bounds
+
+    return raster_data.sel(
         x=slice(extend.minx.values[0], extend.maxx.values[0]),
         y=slice(
             extend.maxy.values[0],  # note that y must be sliced from max to min
@@ -107,6 +137,27 @@ def create_data_array(raster_data: xr.DataArray) -> np.ndarray:
     return np.vstack([grid_x.ravel(), grid_y.ravel()]).T
 
 
+def create_points(data: np.ndarray, crs: CRS) -> gpd.GeoDataFrame:
+
+    wkt_points = [f"Point ({data[i,0]} {data[i,1]})" for i in range(data.shape[0])]
+    geo_series = gpd.GeoSeries.from_wkt(wkt_points)
+
+    return gpd.GeoDataFrame(geometry=geo_series, crs=crs)
+
+
+def mask_by_forest(
+    pixels: gpd.GeoDataFrame, forest: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    is_forest = ~np.isnan(forest.values.flatten())
+    return pixels[is_forest]
+
+
+def geom(data: gpd.GeoDataFrame) -> list[tuple[float]]:
+    """Like the geom function from the terra package in R."""
+    coords = data.geometry.apply(lambda geometry: geometry.coords[0])
+    return coords.tolist()
+
+
 def main():
 
     roi = read_vector_file(
@@ -122,10 +173,14 @@ def main():
     )
 
     dumimg = read_raster_file(sen2r_paths[0])
-    dumimg2 = crop_vector_data_to_shape_boundaries(dumimg, forest)
+    dumimg2 = crop_raster_data_to_shape_boundaries(dumimg, forest)
     dumimg3 = mask_raster_with_vector(dumimg2, forest)
 
-    print(create_data_array(dumimg2))
+    xy = create_data_array(dumimg2)
+    all_pix_pts = create_points(xy, roi.crs)
+    all_pix_pts_for = mask_by_forest(all_pix_pts, dumimg3)
+
+    xyfor = geom(all_pix_pts_for)
 
 
 if __name__ == "__main__":
