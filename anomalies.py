@@ -1,5 +1,5 @@
 from typing import Any
 
 
-def compute_normalized_anomalies(data: Any):
+def calculate_standardized_anomaly(data: Any):
     pass
