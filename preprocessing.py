@@ -1,3 +1,4 @@
+from collections.abc import Sized
 import re
 from pathlib import Path
 
@@ -115,6 +116,7 @@ def mask_raster_with_vector(
     masked_data = rasterio.features.geometry_mask(
         [vector_mask["geometry"][0]],
         transform=transform,
+        all_touched=True,
         invert=True,
         out_shape=(raster_data.rio.height, raster_data.rio.width),
     )
@@ -145,7 +147,7 @@ def create_points(data: np.ndarray, crs: CRS) -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(geometry=geo_series, crs=crs)
 
 
-def mask_by_forest(
+def crop_to_forest(
     pixels: gpd.GeoDataFrame, forest: gpd.GeoDataFrame
 ) -> gpd.GeoDataFrame:
     is_forest = ~np.isnan(forest.values.flatten())
@@ -156,6 +158,13 @@ def geom(data: gpd.GeoDataFrame) -> list[tuple[float]]:
     """Like the geom function from the terra package in R."""
     coords = data.geometry.apply(lambda geometry: geometry.coords[0])
     return coords.tolist()
+
+
+def create_sequences(data: Sized, size: int = 100) -> tuple[np.ndarray, np.ndarray]:
+    from_vals = np.arange(1, len(data) + 1, size)
+    to_vals = from_vals[1:] - 1
+
+    return from_vals, to_vals
 
 
 def main():
@@ -178,7 +187,7 @@ def main():
 
     xy = create_data_array(dumimg2)
     all_pix_pts = create_points(xy, roi.crs)
-    all_pix_pts_for = mask_by_forest(all_pix_pts, dumimg3)
+    all_pix_pts_for = crop_to_forest(all_pix_pts, dumimg3)
 
     xyfor = geom(all_pix_pts_for)
 
