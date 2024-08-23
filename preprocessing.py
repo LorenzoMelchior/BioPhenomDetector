@@ -126,12 +126,14 @@ def mask_raster_with_vector(
     return masked_data
 
 
-def create_coordinates(raster_data: xr.DataArray) -> np.ndarray:
-    """Creates coordinates from the boundaries of a raster dataset.
+def create_grid_points(raster_data: xr.DataArray, interval: int = 10) -> np.ndarray:
+    """Creates evenly-spaced points from the boundaries of a raster dataset.
 
     Args:
         raster_data:
-            raster dataset, only used to extract the boundaries.
+            Raster dataset, only used to extract the boundaries.
+        interval:
+            Interval between the points.
 
     Returns:
         Array of all coordinates in the datasets boundaries.
@@ -140,8 +142,8 @@ def create_coordinates(raster_data: xr.DataArray) -> np.ndarray:
     img_extend = raster_data.rio.bounds()
     img_extend = [int(ext) for ext in img_extend]
 
-    x_cor = np.arange(img_extend[0] + 5, img_extend[2] - 5 + 1, 10)
-    y_cor = np.arange(img_extend[1] + 5, img_extend[3] - 5 + 1, 10)
+    x_cor = np.arange(img_extend[0] + 5, img_extend[2] - 5 + 1, interval)
+    y_cor = np.arange(img_extend[1] + 5, img_extend[3] - 5 + 1, interval)
 
     grid_x, grid_y = np.meshgrid(x_cor, y_cor)
 
@@ -161,7 +163,7 @@ def create_points(data: np.ndarray, crs: CRS) -> gpd.GeoDataFrame:
         GeoDataFrame with points.
     """
     # wkt syntax is much faster than using geometry objects from shapely
-    wkt_points = [f"Point ({data[i,0]} {data[i,1]})" for i in range(data.shape[0])]
+    wkt_points = [f"Point ({data[i, 0]} {data[i, 1]})" for i in range(data.shape[0])]
     geo_series = gpd.GeoSeries.from_wkt(wkt_points)
 
     return gpd.GeoDataFrame(geometry=geo_series, crs=crs)
@@ -193,7 +195,6 @@ def geom(data: gpd.GeoDataFrame) -> list[tuple[float]]:
     Returns:
         A list of coordinates.
     """
-
     coords = data.geometry.apply(lambda geometry: geometry.coords[0])
     return coords.tolist()
 
@@ -230,15 +231,14 @@ def main():
         file_extension="tif",
     )
 
-    dumimg = read_raster_file(sen2r_paths[0])
-    dumimg2 = crop_raster_data_to_shape_boundaries(dumimg, forest)
-    dumimg3 = mask_raster_with_vector(dumimg2, forest)
+    dumimg: xr.DataArray = read_raster_file(sen2r_paths[0])
+    dumimg2: xr.DataArray = crop_raster_data_to_shape_boundaries(dumimg, forest)
+    dumimg3: xr.DataArray = mask_raster_with_vector(dumimg2, forest)
 
-    xy = create_coordinates(dumimg2)
-    all_pix_pts = create_points(xy, roi.crs)
-    all_pix_pts_for = crop_to_mask(all_pix_pts, dumimg3)
-
-    xyfor = geom(all_pix_pts_for)
+    xy: np.ndarray = create_grid_points(dumimg2)
+    all_pix_pts: gpd.GeoDataFrame = create_points(xy, roi.crs)
+    all_pix_pts_for: gpd.GeoDataFrame = crop_to_mask(all_pix_pts, dumimg3)
+    xyfor: list[tuple[float]] = geom(all_pix_pts_for)
 
 
 if __name__ == "__main__":
