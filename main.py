@@ -1,15 +1,8 @@
-import numpy as np
-import pandas as pd
-
-
-def compute_standardized_anomalies(
-    raw_data: np.ndarray, daily_averages: np.ndarray, locations: np.ndarray
-) -> np.ndarray:
-    pass
+import preprocessing
 
 
 def main() -> None:
-    compute_standardized_anomalies(None, None, None)
+    pass
 
 
 if __name__ == "__main__":
