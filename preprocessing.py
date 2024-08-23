@@ -9,7 +9,6 @@ import xarray as xr
 import rasterio
 import rioxarray
 import pendulum
-from shapely.geometry import Point
 
 
 def read_raster_file(file_path: Path) -> xr.DataArray:
@@ -116,6 +115,7 @@ def mask_raster_with_vector(
     masked_data = rasterio.features.geometry_mask(
         [vector_mask["geometry"][0]],
         transform=transform,
+        # all_touched decides whether pixels that touch the border of a geometry are counted or not.
         all_touched=True,
         invert=True,
         out_shape=(raster_data.rio.height, raster_data.rio.width),
@@ -126,7 +126,16 @@ def mask_raster_with_vector(
     return masked_data
 
 
-def create_data_array(raster_data: xr.DataArray) -> np.ndarray:
+def create_coordinates(raster_data: xr.DataArray) -> np.ndarray:
+    """Creates coordinates from the boundaries of a raster dataset.
+
+    Args:
+        raster_data:
+            raster dataset, only used to extract the boundaries.
+
+    Returns:
+        Array of all coordinates in the datasets boundaries.
+    """
 
     img_extend = raster_data.rio.bounds()
     img_extend = [int(ext) for ext in img_extend]
@@ -140,27 +149,67 @@ def create_data_array(raster_data: xr.DataArray) -> np.ndarray:
 
 
 def create_points(data: np.ndarray, crs: CRS) -> gpd.GeoDataFrame:
+    """Create geometry points from rasterized data.
 
+    Args:
+        data:
+            Rasterized data array.
+        crs:
+            coordinate reference system.
+
+    Returns:
+        GeoDataFrame with points.
+    """
+    # wkt syntax is much faster than using geometry objects from shapely
     wkt_points = [f"Point ({data[i,0]} {data[i,1]})" for i in range(data.shape[0])]
     geo_series = gpd.GeoSeries.from_wkt(wkt_points)
 
     return gpd.GeoDataFrame(geometry=geo_series, crs=crs)
 
 
-def crop_to_forest(
-    pixels: gpd.GeoDataFrame, forest: gpd.GeoDataFrame
-) -> gpd.GeoDataFrame:
-    is_forest = ~np.isnan(forest.values.flatten())
+def crop_to_mask(pixels: gpd.GeoDataFrame, mask: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Crops geometry data to another geometry shape.
+
+    Args:
+        pixels:
+            A geometry of points.
+        mask:
+            A mask of pixels, having NA for non-fitting values.
+
+    Returns:
+        The pixels that match the mask.
+    """
+    is_forest = ~np.isnan(mask.values.flatten())
     return pixels[is_forest]
 
 
 def geom(data: gpd.GeoDataFrame) -> list[tuple[float]]:
-    """Like the geom function from the terra package in R."""
+    """Creates coordinates from a geometry. Analogue to the geom function from the terra package in R.
+
+    Args:
+        data:
+            A geometry of points.
+
+    Returns:
+        A list of coordinates.
+    """
+
     coords = data.geometry.apply(lambda geometry: geometry.coords[0])
     return coords.tolist()
 
 
 def create_sequences(data: Sized, size: int = 100) -> tuple[np.ndarray, np.ndarray]:
+    """Create sequences. Maybe removed in the future.
+
+    Args:
+        data:
+            Any data with a length (len() can be applied).
+        size:
+            The size of the sequences.
+
+    Returns:
+        Two sequences as arrays.
+    """
     from_vals = np.arange(1, len(data) + 1, size)
     to_vals = from_vals[1:] - 1
 
@@ -185,9 +234,9 @@ def main():
     dumimg2 = crop_raster_data_to_shape_boundaries(dumimg, forest)
     dumimg3 = mask_raster_with_vector(dumimg2, forest)
 
-    xy = create_data_array(dumimg2)
+    xy = create_coordinates(dumimg2)
     all_pix_pts = create_points(xy, roi.crs)
-    all_pix_pts_for = crop_to_forest(all_pix_pts, dumimg3)
+    all_pix_pts_for = crop_to_mask(all_pix_pts, dumimg3)
 
     xyfor = geom(all_pix_pts_for)
 
