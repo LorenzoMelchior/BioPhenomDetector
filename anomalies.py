@@ -18,24 +18,23 @@ def create_time_series(paths: list[Path]) -> xr.DataArray:
     return xr.DataArray(
         data_stack,
         dims=["time", "y", "x"],  # Why y before x?
-        coords={"time": pd.to_datetime(datetimes)},  # Assign the datetime objects as coordinates
-    name="raster_data"
+        coords={
+            "time": pd.to_datetime(datetimes)
+        },  # Assign the datetime objects as coordinates
+        name="raster_data",
     )
 
 
-def fill_gaps(data: xr.DataArray, timedelta: str = '7D', method: str = 'linear') -> xr.DataArray:
+def fill_gaps(
+    data: xr.DataArray, timedelta: str = "7D", method: str = "linear"
+) -> xr.DataArray:
     filled = data.resample(time=timedelta).mean()
 
-    return filled.interpolate_na(
-        dim='time',
-        method=method,
-        fill_value="extrapolate"
-    )
+    return filled.interpolate_na(dim="time", method=method, fill_value="extrapolate")
 
 
-def compute_standardized_anomaly(data: xr.DataArray,
-                                 average: xr.DataArray,
-                                 std: xr.DataArray,
-                                 time: dt.datetime) -> xr.DataArray:
+def compute_standardized_anomaly(
+    data: xr.DataArray, average: xr.DataArray, std: xr.DataArray, time: dt.datetime
+) -> xr.DataArray:
     data = data.sel(time=time)
     return (data - average) / std
