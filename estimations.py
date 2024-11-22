@@ -85,8 +85,9 @@ def estimate_ccc(dataset: xr.Dataset) -> xr.DataArray:
 def estimate_cwc(dataset: xr.Dataset) -> xr.DataArray:
     return run_snap_biophys(dataset, BiophysicalVariable.CWC)
 
+
 def estimate_all_vars(dataset: xr.Dataset) -> xr.Dataset:
     for var in BiophysicalVariable:
-            dataset = run_snap_biophys(dataset, var)
+        dataset = run_snap_biophys(dataset, var)
 
     return dataset
