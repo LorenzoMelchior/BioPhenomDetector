@@ -6,3 +6,5 @@ pydantic
 pendulum
 geopandas
 rasterio
+xarray
+git+https://github.com/ollinevalainen/satellitetools.git
