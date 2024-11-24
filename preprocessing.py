@@ -1,6 +1,7 @@
 from collections.abc import Sized
 import re
 from pathlib import Path
+import warnings
 
 import numpy as np
 import geopandas as gpd
@@ -21,6 +22,10 @@ def read_raster_file(file_path: Path, **kwargs) -> xr.DataArray:
     Returns:
          The contents of the raster file.
     """
+    # Ignore warnings from rioxarray about images having too many channels, which is to be expected
+    warnings.filterwarnings(
+        "ignore", category=UserWarning, message="TIFFReadDirectory.*"
+    )
     return rioxarray.open_rasterio(file_path, **kwargs)
 
 
