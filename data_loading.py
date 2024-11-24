@@ -208,7 +208,7 @@ def load_satellite_images(
     show_progress: bool = False,
     tmp_dir: Path = Path("tmp"),
 ) -> dict:
-    
+
     file_path.mkdir(exist_ok=True)
 
     config = create_configuration(
