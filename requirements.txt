@@ -3,8 +3,12 @@ pandas
 matplotlib
 tqdm
 pydantic
+pyproj
 pendulum
 geopandas
 rasterio
+sentinelhub
+shapely
 xarray
+rioxarray
 git+https://github.com/ollinevalainen/satellitetools.git

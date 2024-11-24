@@ -11,7 +11,7 @@ import rioxarray
 import pendulum
 
 
-def read_raster_file(file_path: Path) -> xr.DataArray:
+def read_raster_file(file_path: Path, **kwargs) -> xr.DataArray:
     """Read a raster file like a geotiff and return the content.
 
     Args:
@@ -21,10 +21,10 @@ def read_raster_file(file_path: Path) -> xr.DataArray:
     Returns:
          The contents of the raster file.
     """
-    return rioxarray.open_rasterio(file_path)
+    return rioxarray.open_rasterio(file_path, **kwargs)
 
 
-def read_vector_file(file_path: Path) -> gpd.GeoDataFrame:
+def read_vector_file(file_path: Path, **kwargs) -> gpd.GeoDataFrame:
     """Read a vector file like a shapefile and return the content.
 
     file_path:
@@ -33,7 +33,7 @@ def read_vector_file(file_path: Path) -> gpd.GeoDataFrame:
     Returns:
         The contents of the vector file.
     """
-    return gpd.read_file(file_path)
+    return gpd.read_file(file_path, **kwargs)
 
 
 def load_filtered_paths(

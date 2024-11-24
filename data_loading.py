@@ -21,6 +21,8 @@ from sentinelhub import (
     bbox_to_dimensions,
 )
 
+Sentinel2Image = dict[str, Union[str, dt.date, Path]]
+
 relevant_bands = ["B03", "B04", "B05", "B06", "B07", "B8A", "B11", "B12"]
 
 
@@ -206,6 +208,9 @@ def load_satellite_images(
     show_progress: bool = False,
     tmp_dir: Path = Path("tmp"),
 ) -> dict:
+    
+    file_path.mkdir(exist_ok=True)
+
     config = create_configuration(
         "sh-e670f9d0-df66-4f6f-aed0-fccc6f1f871f", "Iih2YwJFxVydRB7HG9j2x6PRn1M74GxP"
     )
