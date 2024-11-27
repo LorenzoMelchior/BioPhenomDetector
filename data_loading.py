@@ -140,7 +140,7 @@ def get_recordings(query_result: list[dict[str, str]]) -> dict[str, dt.date]:
 
 def query_copernicushub(
     config: SHConfig, bbox: BBox, timeframe: tuple[dt.date]
-) -> list[dict[str, Union[str, dt.date]]]:
+) -> list[Sentinel2Image]:
 
     catalog = SentinelHubCatalog(config=config)
     search_results = list(
@@ -225,7 +225,7 @@ def load_satellite_images(
     file_path: Path,
     show_progress: bool = False,
     tmp_dir: Path = Path("tmp"),
-) -> dict:
+) -> list[Sentinel2Image]:
     config = create_configuration(
         "sh-e670f9d0-df66-4f6f-aed0-fccc6f1f871f", "Iih2YwJFxVydRB7HG9j2x6PRn1M74GxP"
     )

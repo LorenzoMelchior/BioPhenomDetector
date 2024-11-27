@@ -1,6 +1,7 @@
 numpy
 pandas
 matplotlib
+seaborn
 tqdm
 pydantic
 pyproj
