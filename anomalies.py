@@ -17,10 +17,8 @@ def create_time_series(paths: list[Path]) -> xr.DataArray:
 
     return xr.DataArray(
         data_stack,
-        dims=["time", "y", "x"],  # Why y before x?
-        coords={
-            "time": pd.to_datetime(datetimes)
-        },  # Assign the datetime objects as coordinates
+        dims=["time", "y", "x"],
+        coords={"time": pd.to_datetime(datetimes)},
         name="raster_data",
     )
 

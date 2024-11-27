@@ -65,6 +65,15 @@ def create_dataset(image: data.Sentinel2Image) -> xr.Dataset:
     for angle in angle_band_names:
         dataset[angle].attrs.update(angle_metadata.get(angle, {}))
 
+    #    dataset = dataset.assign(
+    #        {
+    #            "sun_azimuth": dataset.sun_azimuth.transpose("time", "y", "x"),
+    #            "sun_zenith": dataset.sun_zenith.transpose("time", "y", "x"),
+    #            "view_azimuth": dataset.view_azimuth.transpose("time", "y", "x"),
+    #            "view_zenith": dataset.view_zenith.transpose("time", "y", "x"),
+    #        }
+    #    )
+
     return dataset
 
 
@@ -75,18 +84,18 @@ class BiophysicalVariable(StrEnum):
 
 
 def estimate_lai(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.LAI)
+    return run_snap_biophys(dataset, BiophysicalVariable.LAI).lai[0]
 
 
 def estimate_ccc(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.CCC)
+    return run_snap_biophys(dataset, BiophysicalVariable.CCC).lai_cab[0]
 
 
 def estimate_cwc(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.CWC)
+    return run_snap_biophys(dataset, BiophysicalVariable.CWC).lai_cw[0]
 
 
-def estimate_all_vars(dataset: xr.Dataset) -> xr.Dataset:
+def estimate_biophys_vars(dataset: xr.Dataset) -> xr.Dataset:
     for var in BiophysicalVariable:
         dataset = run_snap_biophys(dataset, var)
 

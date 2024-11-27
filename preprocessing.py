@@ -11,6 +11,9 @@ import rasterio
 import rioxarray
 import pendulum
 
+# Ignore warnings from rioxarray about images having too many channels, which is to be expected
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def read_raster_file(file_path: Path, **kwargs) -> xr.DataArray:
     """Read a raster file like a geotiff and return the content.
@@ -22,10 +25,6 @@ def read_raster_file(file_path: Path, **kwargs) -> xr.DataArray:
     Returns:
          The contents of the raster file.
     """
-    # Ignore warnings from rioxarray about images having too many channels, which is to be expected
-    warnings.filterwarnings(
-        "ignore", category=UserWarning, message="TIFFReadDirectory.*"
-    )
     return rioxarray.open_rasterio(file_path, **kwargs)
 
 
