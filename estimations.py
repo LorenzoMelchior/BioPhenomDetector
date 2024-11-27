@@ -12,7 +12,7 @@ import data_loading as data
 import preprocessing as pp
 
 spectral_metadata = {
-    "B1": {"description": "Ultra blue band", "units": "nm"},
+    "B1": {"description": "Coastal aerosol band", "units": "nm"},
     "B2": {"description": "Blue band", "units": "nm"},
     "B3": {"description": "Green band", "units": "nm"},
     "B4": {"description": "Green band", "units": "nm"},
@@ -84,15 +84,18 @@ class BiophysicalVariable(StrEnum):
 
 
 def estimate_lai(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.LAI).lai[0]
+    lai_layer = run_snap_biophys(dataset, BiophysicalVariable.LAI).lai[0]
+    return lai_layer.rename("Leaf Area Index (LAI)")
 
 
 def estimate_ccc(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.CCC).lai_cab[0]
+    ccc_layer = run_snap_biophys(dataset, BiophysicalVariable.CCC).lai_cab[0]
+    return ccc_layer.rename("Canopy Chlorophyll Content (CCC)")
 
 
 def estimate_cwc(dataset: xr.Dataset) -> xr.DataArray:
-    return run_snap_biophys(dataset, BiophysicalVariable.CWC).lai_cw[0]
+    cwc_layer = run_snap_biophys(dataset, BiophysicalVariable.CWC).lai_cw[0]
+    return cwc_layer.rename("Canopy Water Content (CWC)")
 
 
 def estimate_biophys_vars(dataset: xr.Dataset) -> xr.Dataset:
