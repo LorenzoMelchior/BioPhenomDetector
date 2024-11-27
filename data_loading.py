@@ -242,7 +242,7 @@ def load_satellite_images(
     for item in available_recordings:
         item["path"] = file_path / f"{item['name']}.tif"
 
-    for item in tqdm(available_recordings, disable=not show_progress):
+    for item in tqdm(available_recordings, unit="image", disable=not show_progress):
 
         if not item["path"].is_file():
             download_single_satellite_image(
