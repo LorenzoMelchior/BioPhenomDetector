@@ -7,6 +7,7 @@ from typing import Optional, Union
 
 import pyproj
 import shapely
+import xarray as xr
 
 from tqdm import tqdm
 
@@ -61,6 +62,10 @@ def create_configuration(
         )
 
     return config
+
+
+def save_as_tiff(data: xr.DataArray, name: str) -> None:
+    data.rio.to_raster(name)
 
 
 def parse_date(time: str) -> dt.date:

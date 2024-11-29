@@ -55,3 +55,19 @@ def plot_biophys_result(
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_anomalies(data: xr.DataArray, crs: data.CRS, cmap="rainbow", **kwargs) -> None:
+    image = plt.pcolormesh(data.x, data.y, data.values, cmap=cmap, **kwargs)
+
+    title = f"Anomalies - {crs.name.replace("_", " ")} ({crs.ogc_string()})"
+
+    cbar = plt.colorbar(image, shrink=0.8)
+    cbar.set_label("Anomaly Value", rotation=270, labelpad=15)
+
+    plt.title(title)
+    plt.xlabel("Easting (m)")
+    plt.ylabel("Northing (m)")
+
+    plt.tight_layout()
+    plt.show()
