@@ -55,7 +55,41 @@ def fill_gaps(
     return filled.interpolate_na(dim="time", method=method, fill_value="extrapolate")
 
 
-def compute_standardized_anomaly(data: xr.DataArray, time: dt.datetime) -> xr.DataArray:
+def compute_sda_for_dayofyear(data: xr.DataArray, date: dt.date) -> xr.DataArray:
+    """Computes the multi-year standardized anomaly for a given date.
+    The given date will filter the dataset to only include the same day of the year
+    over multiple years (e.g. 1st of January for each year).
+
+    Args:
+        data:
+            A full interpolated dataset with values of a biophysical variable
+            estimation over multiple years.
+        date:
+            The date to be analyzed. Will also be used to filter the dataset.
+
+    Returns:
+        An array of computed anomalies.
+    """
+    # needed, as they would not fully match otherwise
+    np_date = np.datetime64(date)
+    data_on_date = data.sel(time=np_date)
+
+    # e.g. 1 for first of January
+    day_of_year = pd.to_datetime(date).dayofyear
+
+    # all samples for the given day of year
+    filtered = data.groupby("time.dayofyear")[day_of_year]
+
+    mean = filtered.mean(dim="time")
+    std = filtered.std(dim="time")
+
+    return (data_on_date - mean) / std
+
+
+## LEGACY!
+def _compute_standardized_anomaly(
+    data: xr.DataArray, time: dt.datetime
+) -> xr.DataArray:
 
     mean = data.mean(dim="time")
     std = data.std(dim="time")
