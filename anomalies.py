@@ -4,24 +4,12 @@ import estimations as em
 import datetime as dt
 from pathlib import Path
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
+from scipy.signal import savgol_filter
 import xarray as xr
-
-
-# def create_time_series(paths: list[Path]) -> xr.DataArray:
-#    data_array = [pp.read_raster_file(path)[0] for path in paths]
-#    datetimes = [re.search(r"\d{8}", path.stem).group() for path in paths]
-
-#    data_stack = np.stack(data_array, axis=0)
-
-#    return xr.DataArray(
-#        data_stack,
-#        dims=["time", "y", "x"],
-#        coords={"time": pd.to_datetime(datetimes)},
-#        name="raster_data",
-#    )
 
 
 def create_time_series(
@@ -29,12 +17,13 @@ def create_time_series(
 ) -> xr.DataArray:
     images = sorted(images, key=lambda x: x["date"])
     datasets = [em.create_dataset(image) for image in images]
-    if biophysical_var == em.BiophysicalVariable.LAI:
-        estimations = [em.estimate_lai(ds) for ds in datasets]
-    elif biophysical_var == em.BiophysicalVariable.CCC:
-        estimations = [em.estimate_ccc(ds) for ds in datasets]
-    elif biophysical_var == em.BiophysicalVariable.CWC:
-        estimations = [em.estimate_cwc(ds) for ds in datasets]
+    match biophysical_var:
+        case em.BiophysicalVariable.LAI:
+            estimations = [em.estimate_lai(ds) for ds in datasets]
+        case em.BiophysicalVariable.CCC:
+            estimations = [em.estimate_ccc(ds) for ds in datasets]
+        case em.BiophysicalVariable.CWC:
+            estimations = [em.estimate_cwc(ds) for ds in datasets]
 
     datetimes = [item.time.values.item() for item in estimations]
     data_stack = np.stack([item.values for item in estimations], axis=0)
@@ -42,9 +31,13 @@ def create_time_series(
     return xr.DataArray(
         data_stack,
         dims=["time", "y", "x"],
-        coords={"time": pd.to_datetime(datetimes)},
+        coords={
+            "time": pd.to_datetime(datetimes),
+            "y": estimations[0].y,
+            "x": estimations[0].x,
+        },
         name=f"{biophysical_var.name}",
-    )
+    ).rio.write_crs(datasets[0].rio.crs)
 
 
 def fill_gaps(
@@ -53,6 +46,38 @@ def fill_gaps(
     filled = data.resample(time=timedelta).mean()
 
     return filled.interpolate_na(dim="time", method=method, fill_value="extrapolate")
+
+
+def fill_gaps_and_smooth_data(
+    data_array: xr.DataArray, frequency: str = dt.timedelta(days=1)
+):
+
+    window_length = 21
+    polyorder = 3
+
+    start_date = data_array.time.min().values
+    end_date = data_array.time.max().values
+    full_date_range = pd.date_range(start=start_date, end=end_date, freq=frequency)
+
+    filled_array = data_array.reindex(time=full_date_range)
+
+    for y in range(filled_array.y.size):
+        for x in range(filled_array.x.size):
+            pixel_data = filled_array[:, y, x].values
+
+            mask = np.isnan(pixel_data)
+            non_nan_indices = np.flatnonzero(~mask)
+            if len(non_nan_indices) > 1:
+                pixel_data = np.interp(
+                    np.arange(len(pixel_data)), non_nan_indices, pixel_data[~mask]
+                )
+
+                smoothed_data = savgol_filter(pixel_data, window_length, polyorder)
+                filled_array[:, y, x] = smoothed_data
+            elif len(non_nan_indices) == 1:
+                filled_array[:, y, x] = pixel_data[non_nan_indices[0]]
+
+    return filled_array
 
 
 def compute_sda_for_dayofyear(data: xr.DataArray, date: dt.date) -> xr.DataArray:
@@ -81,18 +106,6 @@ def compute_sda_for_dayofyear(data: xr.DataArray, date: dt.date) -> xr.DataArray
     filtered = data.groupby("time.dayofyear")[day_of_year]
 
     mean = filtered.mean(dim="time")
-    std = filtered.std(dim="time")
+    std = filtered.std(dim="time", skipna=False)
 
     return (data_on_date - mean) / std
-
-
-## LEGACY!
-def _compute_standardized_anomaly(
-    data: xr.DataArray, time: dt.datetime
-) -> xr.DataArray:
-
-    mean = data.mean(dim="time")
-    std = data.std(dim="time")
-    data = data.sel(time=time, method="nearest")
-
-    return (data - mean) / std

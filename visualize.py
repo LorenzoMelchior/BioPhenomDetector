@@ -1,7 +1,10 @@
+import datetime as dt
 import re
+from typing import Optional, Union
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import xarray as xr
 
 import data_loading as data
@@ -19,11 +22,26 @@ def generate_true_color_image(dataset: xr.Dataset) -> np.ndarray:
     return normalize_image(rgb_image.transpose("y", "x", "band").values)
 
 
-def plot_satellite_image(dataset: xr.Dataset, crs: data.CRS, **kwargs) -> None:
+def convert_date_to_string(
+    date: Union[np.datetime64, pd.Timestamp, dt.date, dt.datetime],
+    format: Optional[str] = "%Y-%m-%d",
+) -> str:
+
+    if isinstance(date, np.datetime64):
+        date = date.astype(dt.datetime)
+    elif isinstance(date, pd.Timestamp):
+        date = date.to_pydatetime()
+
+    return date.strftime(format)
+
+
+def plot_satellite_image(dataset: xr.Dataset, **kwargs) -> None:
     image = generate_true_color_image(dataset)
     x_coords, y_coords = dataset.x.values, dataset.y.values
 
-    title = f"{crs.name.replace("_", " ")} ({crs.ogc_string()})"
+    epsg = dataset.rio.crs.to_epsg()
+    date = convert_date_to_string(dataset.time.values.item())
+    title = f"{date} - EPSG:{epsg}"
 
     fig, ax = plt.subplots()
 
@@ -38,12 +56,12 @@ def plot_satellite_image(dataset: xr.Dataset, crs: data.CRS, **kwargs) -> None:
     )
 
 
-def plot_biophys_result(
-    data: xr.DataArray, crs: data.CRS, cmap="rainbow", **kwargs
-) -> None:
+def plot_biophys_result(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
     image = plt.pcolormesh(data.x, data.y, data.values, cmap=cmap, **kwargs)
 
-    title = f"{data.name} - {crs.name.replace("_", " ")} ({crs.ogc_string()})"
+    epsg = data.rio.crs.to_epsg()
+    date = convert_date_to_string(data.time.values.item())
+    title = f"{data.name} - EPSG:{epsg} \n{date})"
 
     cbar = plt.colorbar(image, shrink=0.8)
     biophys_name_short = re.findall(r"\((.*?)\)", data.name)[0]
@@ -57,10 +75,13 @@ def plot_biophys_result(
     plt.show()
 
 
-def plot_anomalies(data: xr.DataArray, crs: data.CRS, cmap="rainbow", **kwargs) -> None:
+def plot_anomalies(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
     image = plt.pcolormesh(data.x, data.y, data.values, cmap=cmap, **kwargs)
 
-    title = f"Anomalies - {crs.name.replace("_", " ")} ({crs.ogc_string()})"
+    epsg = data.rio.crs.to_epsg()
+    pd_date = pd.to_datetime(data.time.values.item())
+    date = convert_date_to_string(pd_date)
+    title = f"Anomalies - EPSG:{epsg} \n{date}"
 
     cbar = plt.colorbar(image, shrink=0.8)
     cbar.set_label("Anomaly Value", rotation=270, labelpad=15)

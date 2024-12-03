@@ -225,15 +225,13 @@ def download_single_satellite_image(
 
 
 def load_satellite_images(
+    config: SHConfig,
     aoi: dict[str, Union[shapely.box, pyproj.crs.crs.CRS]],
     time_range: tuple[dt.date],
     file_path: Path,
     show_progress: bool = False,
     tmp_dir: Path = Path("tmp"),
 ) -> list[Sentinel2Image]:
-    config = create_configuration(
-        "sh-e670f9d0-df66-4f6f-aed0-fccc6f1f871f", "Iih2YwJFxVydRB7HG9j2x6PRn1M74GxP"
-    )
     bbox = BBox(aoi["bbox"], aoi["crs"])
 
     available_recordings = query_copernicushub(config, bbox, time_range)

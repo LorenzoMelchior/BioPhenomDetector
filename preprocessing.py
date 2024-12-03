@@ -1,7 +1,7 @@
 from collections.abc import Sized
+import os
 import re
 from pathlib import Path
-import warnings
 
 import numpy as np
 import geopandas as gpd
@@ -11,8 +11,8 @@ import rasterio
 import rioxarray
 import pendulum
 
-# Ignore warnings from rioxarray about images having too many channels, which is to be expected
-warnings.filterwarnings("ignore", category=UserWarning)
+# Ignore warnings for reading satellite images with more then 3 channels
+os.environ["CPL_LOG"] = "OFF"
 
 
 def read_raster_file(file_path: Path, **kwargs) -> xr.DataArray:

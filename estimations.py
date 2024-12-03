@@ -85,17 +85,23 @@ class BiophysicalVariable(StrEnum):
 
 def estimate_lai(dataset: xr.Dataset) -> xr.DataArray:
     lai_layer = run_snap_biophys(dataset, BiophysicalVariable.LAI).lai[0]
-    return lai_layer.rename("Leaf Area Index (LAI)")
+    lai_layer = lai_layer.rename("Leaf Area Index (LAI)")
+    lai_layer.rio.write_crs(dataset.rio.crs, inplace=True)
+    return lai_layer
 
 
 def estimate_ccc(dataset: xr.Dataset) -> xr.DataArray:
     ccc_layer = run_snap_biophys(dataset, BiophysicalVariable.CCC).lai_cab[0]
-    return ccc_layer.rename("Canopy Chlorophyll Content (CCC)")
+    ccc_layer = ccc_layer.rename("Canopy Chlorophyll Content (CCC)")
+    #    ccc_layer.rio.write_crs(dataset.rio.crs, inplace=True)
+    return ccc_layer
 
 
 def estimate_cwc(dataset: xr.Dataset) -> xr.DataArray:
     cwc_layer = run_snap_biophys(dataset, BiophysicalVariable.CWC).lai_cw[0]
-    return cwc_layer.rename("Canopy Water Content (CWC)")
+    cwc_layer = cwc_layer.rename("Canopy Water Content (CWC)")
+    cwc_layer.rio.write_crs(dataset.rio.crs, inplace=True)
+    return cwc_layer
 
 
 def estimate_biophys_vars(dataset: xr.Dataset) -> xr.Dataset:
