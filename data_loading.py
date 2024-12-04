@@ -22,6 +22,7 @@ from sentinelhub import (
     bbox_to_dimensions,
 )
 
+MIN_FILE_SIZE = 1024 * 1024
 Sentinel2Image = dict[str, Union[str, dt.date, Path]]
 
 relevant_bands = [
@@ -221,6 +222,10 @@ def download_single_satellite_image(
     request.get_data(save_data=True)
     tmp_file_path = Path(temporary_folder) / Path(request.get_filename_list()[0])
 
+    file_size = os.path.getsize(tmp_file_path)
+    if file_size < MIN_FILE_SIZE:
+        raise RuntimeError("File too small")
+
     tmp_file_path.rename(resulting_file_path)
 
 
@@ -245,14 +250,21 @@ def load_satellite_images(
     for item in available_recordings:
         item["path"] = file_path / f"{item['name']}.tif"
 
+    downloaded = []
     for item in tqdm(available_recordings, unit="image", disable=not show_progress):
 
         if not item["path"].is_file():
-            download_single_satellite_image(
-                evalscript, config, bbox, time_range, item["path"]
-            )
+            delta = dt.timedelta(days=1)
+            time_interval = (item["date"] - delta, item["date"] + delta)
+            try:
+                download_single_satellite_image(
+                    evalscript, config, bbox, time_interval, item["path"]
+                )
+            except:
+                continue
+        downloaded.append(item)
 
     if not tmp_exists:
         shutil.rmtree(tmp_dir)
 
-    return available_recordings
+    return sorted(downloaded, key=lambda x: x["date"])

@@ -1,13 +1,21 @@
 import datetime as dt
+from enum import StrEnum
 import re
 from typing import Optional, Union
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 import xarray as xr
 
 import data_loading as data
+
+
+class BiophysUnits(StrEnum):
+    LAI = "$m^2/m^2$"
+    CCC = "$\\mu g/cm^2$"
+    CWC = "$kg/m^2$"
 
 
 def normalize_image(img: np.ndarray) -> np.ndarray:
@@ -61,11 +69,12 @@ def plot_biophys_result(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
 
     epsg = data.rio.crs.to_epsg()
     date = convert_date_to_string(data.time.values.item())
-    title = f"{data.name} - EPSG:{epsg} \n{date})"
+    title = f"{data.name} - EPSG:{epsg} \n{date}"
 
     cbar = plt.colorbar(image, shrink=0.8)
-    biophys_name_short = re.findall(r"\((.*?)\)", data.name)[0]
-    cbar.set_label(f"{biophys_name_short} Value", rotation=270, labelpad=15)
+    biophys_name = re.findall(r"\((.*?)\)", data.name)[0]
+    unit = BiophysUnits[biophys_name].value
+    cbar.set_label(f"{biophys_name} value in {unit}", rotation=270, labelpad=15)
 
     plt.title(title)
     plt.xlabel("Easting (m)")
@@ -91,4 +100,17 @@ def plot_anomalies(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
     plt.ylabel("Northing (m)")
 
     plt.tight_layout()
+    plt.show()
+
+
+def plot_anomaly_hist(data: xr.DataArray) -> None:
+    values = data.values.flatten()
+
+    pd_date = pd.to_datetime(data.time.values.item())
+    date = convert_date_to_string(pd_date)
+    title = f"Anomalies Histogram\n{date}"
+
+    ax = sns.histplot(values)
+
+    ax.set(xlabel="Anomaly values", title=title)
     plt.show()

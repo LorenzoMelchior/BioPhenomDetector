@@ -11,6 +11,13 @@ from satellitetools.biophys.biophys import run_snap_biophys
 import data_loading as data
 import preprocessing as pp
 
+
+class BiophysicalVariable(StrEnum):
+    LAI = "LAI"
+    CCC = "LAI_Cab"
+    CWC = "LAI_Cw"
+
+
 spectral_metadata = {
     "B1": {"description": "Coastal aerosol band", "units": "nm"},
     "B2": {"description": "Blue band", "units": "nm"},
@@ -77,35 +84,24 @@ def create_dataset(image: data.Sentinel2Image) -> xr.Dataset:
     return dataset
 
 
-class BiophysicalVariable(StrEnum):
-    LAI = "LAI"
-    CCC = "LAI_Cab"
-    CWC = "LAI_Cw"
+def rotate(data: xr.DataArray) -> xr.DataArray:
+    data.values = data.values[::-1, ::-1]
+    return data
 
 
 def estimate_lai(dataset: xr.Dataset) -> xr.DataArray:
     lai_layer = run_snap_biophys(dataset, BiophysicalVariable.LAI).lai[0]
     lai_layer = lai_layer.rename("Leaf Area Index (LAI)")
-    lai_layer.rio.write_crs(dataset.rio.crs, inplace=True)
-    return lai_layer
+    return rotate(lai_layer)
 
 
 def estimate_ccc(dataset: xr.Dataset) -> xr.DataArray:
     ccc_layer = run_snap_biophys(dataset, BiophysicalVariable.CCC).lai_cab[0]
     ccc_layer = ccc_layer.rename("Canopy Chlorophyll Content (CCC)")
-    #    ccc_layer.rio.write_crs(dataset.rio.crs, inplace=True)
-    return ccc_layer
+    return rotate(ccc_layer)
 
 
 def estimate_cwc(dataset: xr.Dataset) -> xr.DataArray:
     cwc_layer = run_snap_biophys(dataset, BiophysicalVariable.CWC).lai_cw[0]
     cwc_layer = cwc_layer.rename("Canopy Water Content (CWC)")
-    cwc_layer.rio.write_crs(dataset.rio.crs, inplace=True)
-    return cwc_layer
-
-
-def estimate_biophys_vars(dataset: xr.Dataset) -> xr.Dataset:
-    for var in BiophysicalVariable:
-        dataset = run_snap_biophys(dataset, var)
-
-    return dataset
+    return rotate(cwc_layer)

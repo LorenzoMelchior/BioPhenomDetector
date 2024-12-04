@@ -221,6 +221,23 @@ def create_sequences(data: Sized, size: int = 100) -> tuple[np.ndarray, np.ndarr
     return from_vals, to_vals
 
 
+def scale_bbox(bbox, scale):
+
+    min_x, min_y, max_x, max_y = bbox
+
+    center_x = (min_x + max_x) / 2
+    center_y = (min_y + max_y) / 2
+
+    half_width = (max_x - min_x) * scale / 2
+    half_height = (max_y - min_y) * scale / 2
+
+    new_min_x = center_x - half_width
+    new_max_x = center_x + half_width
+    new_min_y = center_y - half_height
+    new_max_y = center_y + half_height
+    return new_min_x, new_min_y, new_max_x, new_max_y
+
+
 def main():
 
     roi = read_vector_file(
