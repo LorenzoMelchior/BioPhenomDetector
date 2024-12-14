@@ -15,7 +15,7 @@ import data_loading as data
 class BiophysUnits(StrEnum):
     LAI = "$m^2/m^2$"
     CCC = "$\\mu g/cm^2$"
-    CWC = "$kg/m^2$"
+    CWC = "$g/cm^2$"
 
 
 def normalize_image(img: np.ndarray) -> np.ndarray:
@@ -64,7 +64,7 @@ def plot_satellite_image(dataset: xr.Dataset, **kwargs) -> None:
     )
 
 
-def plot_biophys_result(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
+def plot_biophys_result(data: xr.DataArray, cmap="rainbow", save_as: str = None, **kwargs) -> None:
     image = plt.pcolormesh(data.x, data.y, data.values, cmap=cmap, **kwargs)
 
     epsg = data.rio.crs.to_epsg()
@@ -81,7 +81,11 @@ def plot_biophys_result(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
     plt.ylabel("Northing (m)")
 
     plt.tight_layout()
-    plt.show()
+    if not save_as:
+        plt.show()
+
+    if save_as:
+        plt.savefig(save_as)
 
 
 def plot_anomalies(data: xr.DataArray, cmap="rainbow", **kwargs) -> None:
