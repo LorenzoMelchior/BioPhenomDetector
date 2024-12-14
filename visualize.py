@@ -64,7 +64,9 @@ def plot_satellite_image(dataset: xr.Dataset, **kwargs) -> None:
     )
 
 
-def plot_biophys_result(data: xr.DataArray, cmap="rainbow", save_as: str = None, **kwargs) -> None:
+def plot_biophys_result(
+    data: xr.DataArray, cmap="rainbow", save_as: str = None, **kwargs
+) -> None:
     image = plt.pcolormesh(data.x, data.y, data.values, cmap=cmap, **kwargs)
 
     epsg = data.rio.crs.to_epsg()
