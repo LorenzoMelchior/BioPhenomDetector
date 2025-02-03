@@ -10,7 +10,7 @@ This package provides methods to download and process `Sentinel-2` data from Cop
 - Copernicuhub account credentials (id and secret). You can create an account for free [here](http://dataspace.copernicus.eu/).
 
 ## Installation
-`pip -r install requirements.txt`
+`pip install git+https://github.com/LorenzoMelchior/BioPhenomDetector`
 
 ## How to use
 Please have a look at the `Demo.ipynb` notebook, which shows everything you need to know.
