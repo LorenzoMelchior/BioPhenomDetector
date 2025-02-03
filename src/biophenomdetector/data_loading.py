@@ -230,14 +230,43 @@ def download_single_satellite_image(
     tmp_file_path.rename(resulting_file_path)
 
 
+def use_local_files(
+    directory: Path, time_range: tuple[dt.date]
+) -> list[Sentinel2Image]:
+
+    file_pattern = re.compile(r"S2[A|B|C|D]_MSIL2A_(\d{8}).*\.tiff?")
+
+    matching_files = []
+
+    for file in directory.glob("*.tif*"):
+        match = file_pattern.search(file.name)
+        if match:
+            file_date = dt.datetime.strptime(match.group(1), "%Y%m%d").date()
+
+            if time_range[0] <= file_date <= time_range[1]:
+                matching_files.append(
+                    {"name": file.stem, "date": file_date, "path": file}
+                )
+
+    return matching_files
+
+
 def load_satellite_images(
-    config: SHConfig,
     aoi: dict[str, Union[shapely.box, pyproj.crs.crs.CRS]],
     time_range: tuple[dt.date],
     file_path: Path,
+    config: SHConfig = None,
+    download=True,
     show_progress: bool = False,
     tmp_dir: Path = Path("tmp"),
 ) -> list[Sentinel2Image]:
+
+    if not download:
+        return use_local_files(file_path, time_range)
+
+    if not config:
+        config = create_configuration()
+
     bbox = BBox(aoi["bbox"], aoi["crs"])
 
     available_recordings = query_copernicushub(config, bbox, time_range)
