@@ -8,8 +8,8 @@ import xarray as xr
 import shapely
 from satellitetools.biophys.biophys import run_snap_biophys
 
-import data_loading as data
-import preprocessing as pp
+from biophenomdetector import data_loading as data
+from biophenomdetector import preprocessing as pp
 
 
 class BiophysicalVariable(StrEnum):
