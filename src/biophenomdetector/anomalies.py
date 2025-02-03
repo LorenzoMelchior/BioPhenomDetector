@@ -1,5 +1,5 @@
-import preprocessing as pp
-import estimations as em
+from biophenomdetector import preprocessing as pp
+from biophenomdetector import estimations as em
 
 import datetime as dt
 from pathlib import Path

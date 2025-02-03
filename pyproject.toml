@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "BioPhenomDetector"
+name = "biophenomdetector"
 version = "0.1"
 description = "A python module to analyze biophysical phenomena"
 authors = [{name = "Lorenzo Melchior", email = "lorenzo.melchior@dida.do"}]
@@ -32,3 +32,5 @@ dependencies = [
 Homepage = "https://github.com/LorenzoMelchior/BioPhenomDetector"
 Repository = "https://github.com/LorenzoMelchior/BioPhenomDetector"
 
+[tool.setuptools.packages.find]
+where = ["src"]

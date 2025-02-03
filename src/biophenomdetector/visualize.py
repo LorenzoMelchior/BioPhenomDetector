@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 import xarray as xr
 
-import data_loading as data
+from biophenomdetector import data_loading as data
 
 
 class BiophysUnits(StrEnum):
