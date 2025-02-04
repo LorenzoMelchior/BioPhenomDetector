@@ -47,6 +47,15 @@ relevant_bands = [
 # relevant_bands = ["B03", "B04", "B05", "B06", "B07", "B8A", "B11", "B12"]
 
 
+class FileTooSmallError(Exception):
+    """It seems that not-matching (e.g. cloudy) images are still being downloaded,
+    but only with some placeholder metadata.
+    As they are really small, this error is raised when the resulting image is
+    lower than MIN_FILE_SIZE."""
+
+    pass
+
+
 def create_configuration(
     client_id: Optional[str] = None, client_secret: Optional[str] = None
 ) -> SHConfig:
@@ -225,7 +234,7 @@ def download_single_satellite_image(
 
     file_size = os.path.getsize(tmp_file_path)
     if file_size < MIN_FILE_SIZE:
-        raise RuntimeError("File too small")
+        raise FileTooSmallError("File from Copernicushub is too small")
 
     tmp_file_path.rename(resulting_file_path)
 
@@ -295,7 +304,7 @@ def load_satellite_images(
                 download_single_satellite_image(
                     evalscript, config, bbox, time_interval, item["path"]
                 )
-            except:
+            except FileTooSmallError:
                 continue
         downloaded.append(item)
 
