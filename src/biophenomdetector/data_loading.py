@@ -237,18 +237,23 @@ def use_local_files(
     file_pattern = re.compile(r"S2[A|B|C|D]_MSIL2A_(\d{8}).*\.tiff?")
 
     matching_files = []
+    dates_found = []
 
     for file in directory.glob("*.tif*"):
         match = file_pattern.search(file.name)
         if match:
             file_date = dt.datetime.strptime(match.group(1), "%Y%m%d").date()
 
-            if time_range[0] <= file_date <= time_range[1]:
+            if (
+                time_range[0] <= file_date <= time_range[1]
+                and not file_date in dates_found
+            ):
                 matching_files.append(
                     {"name": file.stem, "date": file_date, "path": file}
                 )
+                dates_found.append(file_date)
 
-    return matching_files
+    return sorted(matching_files, key=lambda x: x["date"])
 
 
 def load_satellite_images(
