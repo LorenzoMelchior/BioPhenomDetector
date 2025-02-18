@@ -202,7 +202,7 @@ def download_single_satellite_image(
     time_interval: tuple[dt.date],
     resulting_file_path: Path,
     temporary_folder: Path = Path("tmp"),
-    resolution: int = 60,
+    resolution: int = 20,
     max_cloud_coverage: float = 0.2,
 ) -> None:
 
